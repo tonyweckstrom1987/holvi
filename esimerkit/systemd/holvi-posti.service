@@ -1,0 +1,35 @@
+[Unit]
+Description=Holvi-posti - Gmail-tyokalut posti-agentille
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=holvi
+Group=holvi
+Environment=HOLVI_DIR=/etc/holvi
+Environment=HOLVI_LOKI=/var/log/holvi/audit.log
+# Kuuntele vain palvelimen omaa osoitetta, ei 0.0.0.0. Vaihda oma osoite.
+Environment=HOLVI_POSTI_HOST=192.0.2.2
+Environment=HOLVI_POSTI_PORT=8701
+ExecStart=/opt/holvi/venv/bin/holvi-posti
+Restart=on-failure
+RestartSec=5
+# Kovennus (tarkista omalla koneella: systemd-analyze security holvi.service)
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/log/holvi
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

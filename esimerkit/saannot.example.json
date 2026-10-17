@@ -1,0 +1,12 @@
+{
+  "agentit": {
+    "192.0.2.10": {
+      "nimi": "github-agentti",
+      "tyokalut": ["github_repot", "github_commitit", "github_tiedosto"]
+    },
+    "192.0.2.11": {
+      "nimi": "posti-agentti",
+      "tyokalut": ["gmail_haku", "gmail_viesti"]
+    }
+  }
+}

@@ -1,0 +1,7 @@
+[Unit]
+Description=Holvi sydanmerkki valvontaan (Uptime Kuma push)
+
+[Service]
+Type=oneshot
+User=holvi
+ExecStart=/usr/local/bin/holvi-sydan.sh

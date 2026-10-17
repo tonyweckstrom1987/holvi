@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Aseta Python ${{ matrix.python-version }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Asenna
+        run: pip install -e ".[dev]"
+
+      - name: Testit
+        run: python -m pytest -q
+
+  paketti:
+    # Testaa sen, minka kayttaja oikeasti asentaa: rakenna, asenna puhtaaseen ymparistoon, kaynnista.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Rakenna ja asenna puhtaaseen ymparistoon
+        run: |
+          python -m pip install --upgrade build
+          python -m build --wheel --outdir "$RUNNER_TEMP/dist"
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install "$RUNNER_TEMP"/dist/holvi-*.whl
+
+      - name: Palvelimet kayntiin ja tyokalulistat oikein
+        run: |
+          mkdir -p "$RUNNER_TEMP/etc" "$RUNNER_TEMP/loki"
+          export HOLVI_DIR="$RUNNER_TEMP/etc" HOLVI_LOKI="$RUNNER_TEMP/loki/audit.log"
+          echo '{"agentit": {}}' > "$HOLVI_DIR/saannot.json"
+          "$RUNNER_TEMP/venv/bin/python" - <<'PY'
+          import asyncio
+          from holvi import palvelin, posti
+          assert {t.name for t in asyncio.run(palvelin.mcp.list_tools())} == {"github_repot", "github_commitit", "github_tiedosto", "gmail_haku", "gmail_viesti"}
+          assert {t.name for t in asyncio.run(posti.mcp.list_tools())} == {"gmail_haku", "gmail_viesti"}
+          print("OK")
+          PY
+          test -x "$RUNNER_TEMP/venv/bin/holvi" && test -x "$RUNNER_TEMP/venv/bin/holvi-posti" && test -x "$RUNNER_TEMP/venv/bin/holvi-kirjaudu"
